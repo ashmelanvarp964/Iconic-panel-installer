@@ -96,34 +96,49 @@ EOF
 echo -e "${RESET}"
 line
 
-# ===== SERVER PREP + NGINX FIX =====
-step "Preparing server (auto fix)..."
+# ===== FULL SERVER PREP + NGINX ISSUE FIX SCRIPT =====
+step "Preparing server (FULL nginx fix)..."
 
+# Update system
 apt update && apt upgrade -y
 
+# Install required packages
+apt install -y curl wget git unzip nginx software-properties-common ca-certificates apt-transport-https lsb-release
+
+# Remove apache if causing port conflicts
 systemctl stop apache2 2>/dev/null || true
 apt remove apache2 -y 2>/dev/null || true
 
+# Install Docker
 curl -fsSL https://get.docker.com | bash
 systemctl enable docker
 systemctl start docker
 
+# Enable nginx
 systemctl enable nginx
 systemctl start nginx
 
+# Firewall ports
 ufw allow 80
 ufw allow 443
 ufw allow 8443
 ufw allow OpenSSH
 ufw --force enable
 
+# Kill processes using ports
 fuser -k 80/tcp 2>/dev/null || true
 fuser -k 443/tcp 2>/dev/null || true
 
+# Test nginx
 nginx -t
+
+# Reload nginx
 systemctl restart nginx
 
-ok "Server ready + nginx fixed"
+# Show nginx status
+systemctl status nginx --no-pager
+
+ok "SERVER READY + NGINX FIXED"
 
 line
 
@@ -148,3 +163,4 @@ exit 1
 ;;
 
 esac
+
