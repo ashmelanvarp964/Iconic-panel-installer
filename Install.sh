@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ===== AUTO INSTALL REQUIRED TOOLS =====
+apt update -y
+apt install -y bash curl wget sudo git unzip nginx software-properties-common \
+ca-certificates apt-transport-https lsb-release
+
 # ===== Colors =====
 BLUE='\033[1;34m'; CYAN='\033[1;36m'; GREEN='\033[1;32m'
 YELLOW='\033[1;33m'; RED='\033[1;31m'; RESET='\033[0m'
@@ -58,8 +63,8 @@ bash <(curl -s https://raw.githubusercontent.com/StriderCraft315/Codes/main/srv/
 # ===== CLOUDFLARED =====
 2)
 confirm "Install Cloudflared?" || exit 0
-sudo apt update
-sudo apt install -y cloudflared
+apt update
+apt install -y cloudflared
 ok "Cloudflared installed"
 ;;
 
@@ -94,31 +99,29 @@ line
 # ===== SERVER PREP + NGINX FIX =====
 step "Preparing server (auto fix)..."
 
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl wget git unzip nginx software-properties-common \
-ca-certificates apt-transport-https lsb-release
+apt update && apt upgrade -y
 
-sudo systemctl stop apache2 2>/dev/null || true
-sudo apt remove apache2 -y 2>/dev/null || true
+systemctl stop apache2 2>/dev/null || true
+apt remove apache2 -y 2>/dev/null || true
 
 curl -fsSL https://get.docker.com | bash
-sudo systemctl enable docker
-sudo systemctl start docker
+systemctl enable docker
+systemctl start docker
 
-sudo systemctl enable nginx
-sudo systemctl start nginx
+systemctl enable nginx
+systemctl start nginx
 
-sudo ufw allow 80
-sudo ufw allow 443
-sudo ufw allow 8443
-sudo ufw allow OpenSSH
-sudo ufw --force enable
+ufw allow 80
+ufw allow 443
+ufw allow 8443
+ufw allow OpenSSH
+ufw --force enable
 
-sudo fuser -k 80/tcp 2>/dev/null || true
-sudo fuser -k 443/tcp 2>/dev/null || true
+fuser -k 80/tcp 2>/dev/null || true
+fuser -k 443/tcp 2>/dev/null || true
 
-sudo nginx -t
-sudo systemctl restart nginx
+nginx -t
+systemctl restart nginx
 
 ok "Server ready + nginx fixed"
 
@@ -128,9 +131,9 @@ read -p "🌐 Enter domain (panel.example.com): " DOMAIN
 
 step "Starting Pterodactyl Panel installation..."
 
-# (your panel install commands continue here...)
+# 👉 ADD YOUR FULL PANEL INSTALL COMMANDS HERE
 
-ok "Installer template ready (add panel commands below)"
+ok "Installer template ready ✔"
 
 ;;
 
