@@ -29,7 +29,7 @@ cat <<'BANNER'
  ██║╚██████╗╚██████╔╝██║ ╚████║██║╚██████╗
  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝ ╚═════╝
 
-        ICONIC VPS INSTALLER
+        ICONIC AND ZYCRON VPS INSTALLER
 
 BANNER
 echo -e "${RESET}"
