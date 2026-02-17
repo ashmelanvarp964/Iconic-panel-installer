@@ -30,7 +30,8 @@ cat <<'BANNER'
  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝ ╚═════╝
 
         ICONIC AND ZYCRON VPS INSTALLER
-
+        MADE BY ZYCRON,MODIFIED BY ICONIC
+ 
 BANNER
 echo -e "${RESET}"
 }
