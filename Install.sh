@@ -29,8 +29,8 @@ cat <<'BANNER'
  ██║╚██████╗╚██████╔╝██║ ╚████║██║╚██████╗
  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝ ╚═════╝
 
-        ICONIC INSTALLER
-       
+        ICONIC PANEL INSTALLER
+       Made by Michael and Iconic
 BANNER
 echo -e "${RESET}"
 }
