@@ -1,168 +1,180 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# ===== AUTO INSTALL REQUIRED TOOLS =====
-apt update -y
-apt install -y bash curl wget sudo git unzip nginx software-properties-common \
-ca-certificates apt-transport-https lsb-release
-
-# ===== Colors =====
-BLUE='\033[1;34m'; CYAN='\033[1;36m'; GREEN='\033[1;32m'
-YELLOW='\033[1;33m'; RED='\033[1;31m'; RESET='\033[0m'
-
-# ===== UI =====
-line() { echo -e "\033[1;90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"; }
-step() { echo -e "${BLUE}➜ $1${RESET}"; }
-ok() { echo -e "${GREEN}✔ $1${RESET}"; }
-warn() { echo -e "${YELLOW}⚠ $1${RESET}"; }
-
-# ===== Banner =====
-banner() {
-clear
-echo -e "${BLUE}"
-cat <<'BANNER'
-
- ==========================================================
-               _              _____ _                 _ 
-     /\       | |            / ____| |               | |
-    /  \   ___| |_ _ __ __ _| |    | | ___  _   _  __| |
-   / /\ \ / __| __| '__/ _` | |    | |/ _ \| | | |/ _` |
-  / ____ \\__ \ |_| | | (_| | |____| | (_) | |_| | (_| |
- /_/    \_\___/\__|_|  \__,_|\_____|_|\___/ \__,_|\__,_|
- 
-              Powered By Michael & Iconic    
-              
-========================================================== 
-BANNER
-echo -e "${RESET}"
-}
-
-confirm() {
-read -rp "$(echo -e "${YELLOW}$1 (y/n): ${RESET}")" ans
-[[ "$ans" =~ ^[Yy]$ ]]
-}
-
-# ===== Menu =====
-banner
-echo -e "${YELLOW}1) Vm Tool${RESET}"
-echo -e "${CYAN}2) Install Cloudflared${RESET}"
-echo -e "${YELLOW}3) Configure Pterodactyl Wings${RESET}"
-echo -e "${GREEN}4) Install Pterodactyl Panel${RESET}"
-echo -e "${RED}0) Exit${RESET}"
-echo ""
-
-read -rp "Enter choice: " CHOICE
-echo ""
-
-case "$CHOICE" in
-
-# ===== VM TOOL =====
-1)
-confirm "Run Vm Tool?" || exit 0
-bash <(curl -s https://raw.githubusercontent.com/StriderCraft315/Codes/main/srv/vm/vps.sh)
-;;
-
-# ===== CLOUDFLARED =====
-2)
-confirm "Install Cloudflared?" || exit 0
-apt update
-apt install -y cloudflared
-ok "Cloudflared installed"
-;;
-
-# ===== WINGS =====
-3)
-confirm "Configure Wings?" || exit 0
-bash <(curl -s https://raw.githubusercontent.com/StriderCraft315/Codes/main/srv/wings/auto1.sh)
-;;
-
-# ===== PANEL INSTALL =====
-4)
+#!/bin/bash
 
 clear
-echo -e "${CYAN}"
 
-cat << "EOF"
+logo() {
+echo -e "\e[36m"
+echo " █████╗ ███████╗██╗  ██╗███╗   ███╗███████╗██╗     "
+sleep 0.1
+echo "██╔══██╗██╔════╝██║  ██║████╗ ████║██╔════╝██║     "
+sleep 0.1
+echo "███████║███████╗███████║██╔████╔██║█████╗  ██║     "
+sleep 0.1
+echo "██╔══██║╚════██║██╔══██║██║╚██╔╝██║██╔══╝  ██║     "
+sleep 0.1
+echo "██║  ██║███████║██║  ██║██║ ╚═╝ ██║███████╗███████╗"
+sleep 0.1
+echo "╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝"
+echo ""
+echo "      ⚡ ASHMEL PTERODACTYL INSTALLER ⚡"
+echo -e "\e[0m"
+}
 
-██╗ ██████╗ ██████╗ ███╗   ██╗██╗ ██████╗
-██║██╔════╝██╔═══██╗████╗  ██║██║██╔════╝
-██║██║     ██║   ██║██╔██╗ ██║██║██║
-██║██║     ██║   ██║██║╚██╗██║██║██║
-██║╚██████╗╚██████╔╝██║ ╚████║██║╚██████╗
-╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝ ╚═════╝
+menu() {
 
-        PTERODACTYL PANEL INSTALLER
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "1) Install Panel"
+echo "2) Install Wings"
+echo "3) Install Panel + Wings (Auto)"
+echo "4) Uninstall Panel"
+echo "5) Uninstall Wings"
+echo "6) Exit"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 
-EOF
+read -p "Select option: " option
 
-echo -e "${RESET}"
-line
-
-# ===== FULL SERVER PREP + NGINX ISSUE FIX SCRIPT =====
-step "Preparing server (FULL nginx fix)..."
-
-# Update system
-apt update && apt upgrade -y
-
-# Install required packages
-apt install -y curl wget git unzip nginx software-properties-common ca-certificates apt-transport-https lsb-release
-
-# Remove apache if causing port conflicts
-systemctl stop apache2 2>/dev/null || true
-apt remove apache2 -y 2>/dev/null || true
-
-# Install Docker
-curl -fsSL https://get.docker.com | bash
-systemctl enable docker
-systemctl start docker
-
-# Enable nginx
-systemctl enable nginx
-systemctl start nginx
-
-# Firewall ports
-ufw allow 80
-ufw allow 443
-ufw allow 8443
-ufw allow OpenSSH
-ufw --force enable
-
-# Kill processes using ports
-fuser -k 80/tcp 2>/dev/null || true
-fuser -k 443/tcp 2>/dev/null || true
-
-# Test nginx
-nginx -t
-
-# Reload nginx
-systemctl restart nginx
-
-# Show nginx status
-systemctl status nginx --no-pager
-
-ok "SERVER READY + NGINX FIXED"
-
-line
-
-read -p "🌐 Enter domain (panel.example.com): " DOMAIN
-
-step "Starting Pterodactyl Panel installation..."
-
-# 👉 ADD YOUR FULL PANEL INSTALL COMMANDS HERE
-
-ok "Installer template ready ✔"
-
-;;
-
-0)
-echo "Exiting ICONIC Installer."
-exit 0
-;;
-
-*)
-echo -e "${RED}Invalid choice${RESET}"
-exit 1
-;;
-
+case $option in
+1) install_panel ;;
+2) install_wings ;;
+3) install_both ;;
+4) uninstall_panel ;;
+5) uninstall_wings ;;
+6) exit ;;
+*) echo "Invalid option"; sleep 2; main ;;
 esac
 
+}
+
+dependencies() {
+
+echo "Installing Dependencies..."
+
+apt update -y
+apt upgrade -y
+
+apt install -y curl wget sudo software-properties-common apt-transport-https ca-certificates gnupg lsb-release
+
+}
+
+install_panel() {
+
+dependencies
+
+echo "Installing Panel..."
+
+read -p "Enter Panel Domain (FQDN): " FQDN
+read -p "Enter Admin Email: " EMAIL
+
+add-apt-repository ppa:ondrej/php -y
+apt update
+
+apt install -y php8.2 php8.2-cli php8.2-gd php8.2-mysql php8.2-mbstring php8.2-bcmath php8.2-xml php8.2-fpm php8.2-curl php8.2-zip
+
+apt install -y mariadb-server nginx redis-server
+
+curl -sL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
+
+mkdir -p /var/www/pterodactyl
+cd /var/www/pterodactyl
+
+curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz
+
+tar -xzvf panel.tar.gz
+
+chmod -R 755 storage/* bootstrap/cache/
+
+cp .env.example .env
+
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer
+
+composer install --no-dev --optimize-autoloader
+
+php artisan key:generate --force
+
+echo ""
+echo "Now follow the panel setup prompts"
+php artisan p:environment:setup
+php artisan p:environment:database
+php artisan migrate --seed --force
+php artisan p:user:make
+
+chown -R www-data:www-data /var/www/pterodactyl
+
+systemctl enable nginx
+systemctl enable php8.2-fpm
+systemctl enable redis-server
+
+echo ""
+echo "✅ PANEL INSTALLED"
+echo "Domain: $FQDN"
+
+sleep 3
+main
+
+}
+
+install_wings() {
+
+echo "Installing Wings..."
+
+curl -s https://pterodactyl-installer.se | bash
+
+echo "✅ Wings Installed"
+
+sleep 2
+main
+
+}
+
+install_both() {
+
+install_panel
+install_wings
+
+}
+
+uninstall_panel() {
+
+echo "Removing Panel..."
+
+systemctl stop nginx
+systemctl stop php8.2-fpm
+
+rm -rf /var/www/pterodactyl
+
+apt remove nginx mariadb-server redis-server php8.2* -y
+
+echo "Panel removed"
+
+sleep 2
+main
+
+}
+
+uninstall_wings() {
+
+echo "Removing Wings..."
+
+systemctl stop wings
+
+rm -rf /etc/pterodactyl
+rm -rf /usr/local/bin/wings
+
+echo "Wings removed"
+
+sleep 2
+main
+
+}
+
+main() {
+clear
+logo
+menu
+}
+
+main
