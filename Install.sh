@@ -1,3 +1,4 @@
+```bash
 #!/bin/bash
 
 clear
@@ -55,20 +56,39 @@ esac
 
 }
 
+dependencies() {
+
+echo -e "${CYAN}Installing dependencies...${NC}"
+
+apt update -y
+apt upgrade -y
+
+apt install -y curl wget tar unzip software-properties-common apt-transport-https ca-certificates gnupg lsb-release
+
+}
+
 install_panel() {
+
+dependencies
 
 echo -e "${CYAN}Panel Setup${NC}"
 
 read -p "Admin Email: " ADMIN_EMAIL
 read -s -p "Admin Password: " ADMIN_PASS
-echo ""
-
+echo
 read -p "Panel Domain (FQDN): " FQDN
 
-echo -e "${GREEN}Installing dependencies...${NC}"
+echo -e "${GREEN}Installing panel packages...${NC}"
 
-apt update -y
-apt install -y curl wget nginx mariadb-server redis-server
+add-apt-repository ppa:ondrej/php -y
+apt update
+
+apt install -y php8.2 php8.2-cli php8.2-gd php8.2-mysql php8.2-mbstring php8.2-bcmath php8.2-xml php8.2-fpm php8.2-curl php8.2-zip
+
+apt install -y mariadb-server nginx redis-server
+
+curl -sL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
 
 mkdir -p /var/www/pterodactyl
 cd /var/www/pterodactyl
@@ -77,17 +97,39 @@ curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/downl
 
 tar -xzvf panel.tar.gz
 
-echo ""
-echo -e "${GREEN}Creating Admin Account...${NC}"
+chmod -R 755 storage/* bootstrap/cache/
+
+cp .env.example .env
+
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer
+
+composer install --no-dev --optimize-autoloader
+
+php artisan key:generate --force
+
+echo -e "${GREEN}Setting up database & environment...${NC}"
+
+php artisan p:environment:setup
+php artisan p:environment:database
+php artisan migrate --seed --force
+
+echo -e "${GREEN}Creating admin account...${NC}"
 
 php artisan p:user:make <<EOF
+Ashmel
+Admin
+admin
 $ADMIN_EMAIL
-admin
-admin
-admin
 $ADMIN_PASS
 yes
 EOF
+
+chown -R www-data:www-data /var/www/pterodactyl
+
+systemctl enable nginx
+systemctl enable php8.2-fpm
+systemctl enable redis-server
 
 echo ""
 echo -e "${GREEN}Panel Installed Successfully${NC}"
@@ -106,7 +148,7 @@ curl -s https://pterodactyl-installer.se | bash
 
 echo -e "${GREEN}Wings Installed${NC}"
 
-sleep 2
+sleep 3
 main
 
 }
@@ -122,12 +164,16 @@ uninstall_panel() {
 
 echo -e "${RED}Removing Panel...${NC}"
 
+systemctl stop nginx
+systemctl stop php8.2-fpm
+
 rm -rf /var/www/pterodactyl
-apt remove nginx mariadb-server redis-server -y
+
+apt remove nginx mariadb-server redis-server php8.2* -y
 
 echo -e "${GREEN}Panel Removed${NC}"
 
-sleep 2
+sleep 3
 main
 
 }
@@ -137,11 +183,13 @@ uninstall_wings() {
 echo -e "${RED}Removing Wings...${NC}"
 
 systemctl stop wings
+
 rm -rf /etc/pterodactyl
+rm -rf /usr/local/bin/wings
 
 echo -e "${GREEN}Wings Removed${NC}"
 
-sleep 2
+sleep 3
 main
 
 }
@@ -153,3 +201,4 @@ menu
 }
 
 main
+```
