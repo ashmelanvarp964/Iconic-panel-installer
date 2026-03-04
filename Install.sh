@@ -2,8 +2,17 @@
 
 clear
 
+# COLORS
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;34m'
+CYAN='\033[1;36m'
+NC='\033[0m'
+
 logo() {
-echo -e "\e[36m"
+
+echo -e "${CYAN}"
 echo " █████╗ ███████╗██╗  ██╗███╗   ███╗███████╗██╗     "
 sleep 0.1
 echo "██╔══██╗██╔════╝██║  ██║████╗ ████║██╔════╝██║     "
@@ -16,21 +25,20 @@ echo "██║  ██║███████║██║  ██║██║ 
 sleep 0.1
 echo "╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝"
 echo ""
-echo "      ⚡ ASHMEL PTERODACTYL INSTALLER ⚡"
-echo -e "\e[0m"
+echo -e "${GREEN}        ⚡ ASHMEL PTERODACTYL INSTALLER ⚡${NC}"
+echo ""
 }
 
 menu() {
 
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "1) Install Panel"
-echo "2) Install Wings"
-echo "3) Install Panel + Wings (Auto)"
-echo "4) Uninstall Panel"
-echo "5) Uninstall Wings"
-echo "6) Exit"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}1)${NC} Install Panel"
+echo -e "${GREEN}2)${NC} Install Wings"
+echo -e "${GREEN}3)${NC} Install Panel + Wings"
+echo -e "${RED}4)${NC} Uninstall Panel"
+echo -e "${RED}5)${NC} Uninstall Wings"
+echo -e "${BLUE}6)${NC} Exit"
+echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 
 read -p "Select option: " option
@@ -47,35 +55,20 @@ esac
 
 }
 
-dependencies() {
-
-echo "Installing Dependencies..."
-
-apt update -y
-apt upgrade -y
-
-apt install -y curl wget sudo software-properties-common apt-transport-https ca-certificates gnupg lsb-release
-
-}
-
 install_panel() {
 
-dependencies
+echo -e "${CYAN}Panel Setup${NC}"
 
-echo "Installing Panel..."
+read -p "Admin Email: " ADMIN_EMAIL
+read -s -p "Admin Password: " ADMIN_PASS
+echo ""
 
-read -p "Enter Panel Domain (FQDN): " FQDN
-read -p "Enter Admin Email: " EMAIL
+read -p "Panel Domain (FQDN): " FQDN
 
-add-apt-repository ppa:ondrej/php -y
-apt update
+echo -e "${GREEN}Installing dependencies...${NC}"
 
-apt install -y php8.2 php8.2-cli php8.2-gd php8.2-mysql php8.2-mbstring php8.2-bcmath php8.2-xml php8.2-fpm php8.2-curl php8.2-zip
-
-apt install -y mariadb-server nginx redis-server
-
-curl -sL https://deb.nodesource.com/setup_18.x | bash -
-apt install -y nodejs
+apt update -y
+apt install -y curl wget nginx mariadb-server redis-server
 
 mkdir -p /var/www/pterodactyl
 cd /var/www/pterodactyl
@@ -84,32 +77,20 @@ curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/downl
 
 tar -xzvf panel.tar.gz
 
-chmod -R 755 storage/* bootstrap/cache/
+echo ""
+echo -e "${GREEN}Creating Admin Account...${NC}"
 
-cp .env.example .env
-
-curl -sS https://getcomposer.org/installer | php
-mv composer.phar /usr/local/bin/composer
-
-composer install --no-dev --optimize-autoloader
-
-php artisan key:generate --force
+php artisan p:user:make <<EOF
+$ADMIN_EMAIL
+admin
+admin
+admin
+$ADMIN_PASS
+yes
+EOF
 
 echo ""
-echo "Now follow the panel setup prompts"
-php artisan p:environment:setup
-php artisan p:environment:database
-php artisan migrate --seed --force
-php artisan p:user:make
-
-chown -R www-data:www-data /var/www/pterodactyl
-
-systemctl enable nginx
-systemctl enable php8.2-fpm
-systemctl enable redis-server
-
-echo ""
-echo "✅ PANEL INSTALLED"
+echo -e "${GREEN}Panel Installed Successfully${NC}"
 echo "Domain: $FQDN"
 
 sleep 3
@@ -119,11 +100,11 @@ main
 
 install_wings() {
 
-echo "Installing Wings..."
+echo -e "${CYAN}Installing Wings...${NC}"
 
 curl -s https://pterodactyl-installer.se | bash
 
-echo "✅ Wings Installed"
+echo -e "${GREEN}Wings Installed${NC}"
 
 sleep 2
 main
@@ -139,16 +120,12 @@ install_wings
 
 uninstall_panel() {
 
-echo "Removing Panel..."
-
-systemctl stop nginx
-systemctl stop php8.2-fpm
+echo -e "${RED}Removing Panel...${NC}"
 
 rm -rf /var/www/pterodactyl
+apt remove nginx mariadb-server redis-server -y
 
-apt remove nginx mariadb-server redis-server php8.2* -y
-
-echo "Panel removed"
+echo -e "${GREEN}Panel Removed${NC}"
 
 sleep 2
 main
@@ -157,14 +134,12 @@ main
 
 uninstall_wings() {
 
-echo "Removing Wings..."
+echo -e "${RED}Removing Wings...${NC}"
 
 systemctl stop wings
-
 rm -rf /etc/pterodactyl
-rm -rf /usr/local/bin/wings
 
-echo "Wings removed"
+echo -e "${GREEN}Wings Removed${NC}"
 
 sleep 2
 main
