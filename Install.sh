@@ -1,4 +1,4 @@
-cat > /tmp/astra-fixed.sh << 'EOF'
+
 #!/bin/bash
 
 # ASTRA - Fixed Installer
